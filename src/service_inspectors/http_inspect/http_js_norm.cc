@@ -137,6 +137,7 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
 {
     if (ssn->js_built_in_event)
         return;
+        
     const Packet* current_packet = DetectionEngine::get_current_packet();
     const char* ptr = (const char*)input.start();
     const char* const end = ptr + input.length();
@@ -167,17 +168,20 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
         case JSTokenizer::EOS:
         case JSTokenizer::SCRIPT_CONTINUE:
             break;
+
         case JSTokenizer::SCRIPT_ENDED:
         case JSTokenizer::CLOSING_TAG:
             *infractions += INF_JS_CLOSING_TAG;
             events->create_event(EVENT_JS_CLOSING_TAG);
             ssn->js_built_in_event = true;
             break;
+
         case JSTokenizer::OPENING_TAG:
             *infractions += INF_JS_OPENING_TAG;
             events->create_event(EVENT_JS_OPENING_TAG);
             ssn->js_built_in_event = true;
             break;
+
         case JSTokenizer::BAD_TOKEN:
         case JSTokenizer::WRONG_CLOSING_SYMBOL:
         case JSTokenizer::ENDED_IN_INNER_SCOPE:
@@ -185,23 +189,27 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
             events->create_event(EVENT_JS_BAD_TOKEN);
             ssn->js_built_in_event = true;
             break;
+
         case JSTokenizer::IDENTIFIER_OVERFLOW:
             HttpModule::increment_peg_counts(PEG_JS_IDENTIFIER_OVERFLOW);
             *infractions += INF_JS_IDENTIFIER_OVERFLOW;
             events->create_event(EVENT_JS_IDENTIFIER_OVERFLOW);
             ssn->js_built_in_event = true;
             break;
+
         case JSTokenizer::TEMPLATE_NESTING_OVERFLOW:
         case JSTokenizer::BRACKET_NESTING_OVERFLOW:
             *infractions += INF_JS_BRACKET_NEST_OVERFLOW;
             events->create_event(EVENT_JS_BRACKET_NEST_OVERFLOW);
             ssn->js_built_in_event = true;
             break;
+
         case JSTokenizer::SCOPE_NESTING_OVERFLOW:
             *infractions += INF_JS_SCOPE_NEST_OVERFLOW;
             events->create_event(EVENT_JS_SCOPE_NEST_OVERFLOW);
             ssn->js_built_in_event = true;
             break;
+
         default:
             assert(false);
             break;
@@ -268,7 +276,7 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
                 ptr++;
             else
             {
-                if (!mpse_attr->find(ptr, end - ptr, match_attr, false, &sctx) || ptr == sctx.next)
+                if (!mpse_attr->find(ptr, end - ptr, match_attr, false, &sctx) or ptr == sctx.next)
                     break; // the opening tag never ends
                 ptr = sctx.next;
             }
@@ -309,44 +317,53 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
         case JSTokenizer::EOS:
             js_ctx.reset_depth();
             break;
+
         case JSTokenizer::SCRIPT_ENDED:
             break;
+
         case JSTokenizer::SCRIPT_CONTINUE:
             break;
+
         case JSTokenizer::OPENING_TAG:
             *infractions += INF_JS_OPENING_TAG;
             events->create_event(EVENT_JS_OPENING_TAG);
             break;
+
         case JSTokenizer::CLOSING_TAG:
             *infractions += INF_JS_CLOSING_TAG;
             events->create_event(EVENT_JS_CLOSING_TAG);
             break;
+
         case JSTokenizer::BAD_TOKEN:
         case JSTokenizer::WRONG_CLOSING_SYMBOL:
         case JSTokenizer::ENDED_IN_INNER_SCOPE:
             *infractions += INF_JS_BAD_TOKEN;
             events->create_event(EVENT_JS_BAD_TOKEN);
             break;
+
         case JSTokenizer::IDENTIFIER_OVERFLOW:
             HttpModule::increment_peg_counts(PEG_JS_IDENTIFIER_OVERFLOW);
             *infractions += INF_JS_IDENTIFIER_OVERFLOW;
             events->create_event(EVENT_JS_IDENTIFIER_OVERFLOW);
             break;
+
         case JSTokenizer::TEMPLATE_NESTING_OVERFLOW:
         case JSTokenizer::BRACKET_NESTING_OVERFLOW:
             *infractions += INF_JS_BRACKET_NEST_OVERFLOW;
             events->create_event(EVENT_JS_BRACKET_NEST_OVERFLOW);
             break;
+
         case JSTokenizer::SCOPE_NESTING_OVERFLOW:
             *infractions += INF_JS_SCOPE_NEST_OVERFLOW;
             events->create_event(EVENT_JS_SCOPE_NEST_OVERFLOW);
             break;
+
         default:
             assert(false);
             break;
         }
 
-        if (script_external && output_size_before != js_ctx.script_size())
+        if (script_external and output_size_before != js_ctx.script_size())
         {
             *infractions += INF_JS_CODE_IN_EXTERNAL;
             events->create_event(EVENT_JS_CODE_IN_EXTERNAL);
@@ -389,7 +406,7 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
         }
     }
 
-    if (!script_continue && final_portion)
+    if (!script_continue and final_portion)
         ssn->release_js_ctx();
 }
 
@@ -419,7 +436,7 @@ void HttpJsNorm::do_legacy(const Field& input, Field& output, HttpInfractions* i
             const char* js_start = ptr + mindex;
             const char* const angle_bracket =
                 (const char*)SnortStrnStr(js_start, end - js_start, ">");
-            if (angle_bracket == nullptr || (end - angle_bracket) == 0)
+            if (angle_bracket == nullptr or (end - angle_bracket) == 0)
                 break;
 
             bool type_js = false;
@@ -438,6 +455,7 @@ void HttpJsNorm::do_legacy(const Field& input, Field& output, HttpInfractions* i
                         js_present = true;
                         type_js = true;
                         break;
+
                     default:
                         type_js = false;
                         break;
@@ -455,6 +473,7 @@ void HttpJsNorm::do_legacy(const Field& input, Field& output, HttpInfractions* i
             {
                 if ((js_start - ptr) > (input.length() - index))
                     break;
+                    
                 memmove_s(buffer + index, input.length() - index, ptr, js_start - ptr);
                 index += js_start - ptr;
             }
@@ -475,7 +494,7 @@ void HttpJsNorm::do_legacy(const Field& input, Field& output, HttpInfractions* i
 
     if (js_present)
     {
-        if ((ptr < end) && ((input.length() - index) >= (end - ptr)))
+        if ((ptr < end) and ((input.length() - index) >= (end - ptr)))
         {
             memmove_s(buffer + index, input.length() - index, ptr, end - ptr);
             index += end - ptr;
@@ -554,7 +573,7 @@ int HttpJsNorm::match_attr(void* pid, void*, int index, void* sctx, void*)
     case AID_SRC:
         c = ctx->next + index;
         while (*c == ' ') c++;
-        ctx->is_external = ctx->is_external || *c == '=';
+        ctx->is_external = ctx->is_external or *c == '=';
         return 0;
 
     case AID_JS:
