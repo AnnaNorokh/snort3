@@ -29,7 +29,6 @@
 
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
-
 #include "log/unified2.h"
 #include "protocols/packet.h"
 #include "service_inspectors/http2_inspect/http2_dummy_packet.h"
@@ -62,7 +61,7 @@ static std::string GetUnreservedChars(const ByteBitSet& bitset)
     std::string chars;
 
     for (unsigned char c = 1; c; ++c)
-        if (def_bitset[c] && !bitset[c])
+        if (def_bitset[c] and !bitset[c])
             chars += c;
 
     return chars;
@@ -78,7 +77,7 @@ static std::string GetBadChars(const ByteBitSet& bitset)
             ss << " 0x" << std::setw(2) << std::setfill('0') << i;
 
     auto str = ss.str();
-    if ( !str.empty() )
+    if (!str.empty())
         str.erase(0, 1);
 
     return str;
@@ -117,7 +116,7 @@ HttpInspect::HttpInspect(const HttpParaList* params_) :
     {
         HttpTestManager::activate_test_output(HttpTestManager::IN_HTTP);
     }
-    if ((params->test_input) || (params->test_output))
+    if ((params->test_input) or (params->test_output))
     {
         HttpTestManager::set_print_amount(params->print_amount);
         HttpTestManager::set_print_hex(params->print_hex);
@@ -138,7 +137,7 @@ HttpInspect::~HttpInspect()
     delete script_finder;
 }
 
-bool HttpInspect::configure(SnortConfig* )
+bool HttpInspect::configure(SnortConfig*)
 {
     params->js_norm_param.js_norm->configure();
     params->mime_decode_conf->sync_all_depths();
@@ -368,31 +367,27 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
         break;
 
     case InspectionBuffer::IBT_HEADER:
-
     case InspectionBuffer::IBT_RAW_HEADER:
         // http_header fast patterns for response bodies limited to first section
-        if ((get_latest_src(p) == SRC_SERVER) && (get_latest_is(p) == IS_BODY))
+        if ((get_latest_src(p) == SRC_SERVER) and (get_latest_is(p) == IS_BODY))
             return false;
         break;
 
     case InspectionBuffer::IBT_BODY:
-
     case InspectionBuffer::IBT_VBA:
-
     case InspectionBuffer::IBT_JS_DATA:
-        if ((get_latest_is(p) != IS_FIRST_BODY) && (get_latest_is(p) != IS_BODY))
+        if ((get_latest_is(p) != IS_FIRST_BODY) and (get_latest_is(p) != IS_BODY))
             return false;
         break;
 
     case InspectionBuffer::IBT_METHOD:
-        if ((get_latest_src(p) != SRC_CLIENT) || (get_latest_is(p) == IS_BODY))
+        if ((get_latest_src(p) != SRC_CLIENT) or (get_latest_is(p) == IS_BODY))
             return false;
         break;
 
     case InspectionBuffer::IBT_STAT_CODE:
-
     case InspectionBuffer::IBT_STAT_MSG:
-        if ((get_latest_src(p) != SRC_SERVER) || (get_latest_is(p) != IS_HEADER))
+        if ((get_latest_src(p) != SRC_SERVER) or (get_latest_is(p) != IS_HEADER))
             return false;
         break;
 
@@ -478,8 +473,8 @@ int HttpInspect::get_xtra_jsnorm(Flow* flow, uint8_t** buf, uint32_t* len, uint3
 {
     HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
 
-    if ((current_section == nullptr) ||
-        (current_section->get_source_id() != SRC_SERVER) ||
+    if ((current_section == nullptr) or
+        (current_section->get_source_id() != SRC_SERVER) or
         !current_section->get_params()->js_norm_param.normalize_javascript)
         return 0;
 
@@ -550,8 +545,8 @@ void HttpInspect::eval(Packet* p)
 
     // FIXIT-M Workaround for unexpected eval() calls. Currently asserting when stream_user is in
     // use due to calls to HttpInspect::eval on the raw stream_user packet
-    if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) ||
-        (session_data->type_expected[source_id] == SEC_ABORT)       ||
+    if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) or
+        (session_data->type_expected[source_id] == SEC_ABORT)       or
         (session_data->octets_reassembled[source_id] != p->dsize))
     {
         //assert(session_data->type_expected[source_id] != SEC_ABORT);
@@ -567,14 +562,14 @@ void HttpInspect::eval(Packet* p)
     session_data->octets_reassembled[source_id] = STAT_NOT_PRESENT;
 
     // Don't make pkt_data for headers available to detection
-    if ((session_data->section_type[source_id] == SEC_HEADER) ||
+    if ((session_data->section_type[source_id] == SEC_HEADER) or
         (session_data->section_type[source_id] == SEC_TRAILER))
     {
         p->set_detect_limit(0);
     }
 
     // Limit alt_dsize of message body sections to request/response depth
-    if ((session_data->detect_depth_remaining[source_id] > 0) &&
+    if ((session_data->detect_depth_remaining[source_id] > 0) and
         (session_data->detect_depth_remaining[source_id] < p->dsize))
     {
         p->set_detect_limit(session_data->detect_depth_remaining[source_id]);
@@ -597,7 +592,7 @@ void HttpInspect::eval(Packet* p)
 
     // If current transaction is complete then we are done with it. This is strictly a memory
     // optimization not necessary for correct operation.
-    if ((source_id == SRC_SERVER) && (session_data->type_expected[SRC_SERVER] == SEC_STATUS) &&
+    if ((source_id == SRC_SERVER) and (session_data->type_expected[SRC_SERVER] == SEC_STATUS) and
         session_data->transaction[SRC_SERVER]->final_response())
     {
         HttpTransaction::delete_transaction(session_data->transaction[SRC_SERVER], session_data);
@@ -691,7 +686,7 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
         }
         fflush(stdout);
     }
-#endif 
+#endif
 
     current_section->publish();
 
@@ -704,7 +699,7 @@ void HttpInspect::clear(Packet* p)
 
     HttpFlowData* const session_data = http_get_flow_data(p->flow);
 
-    if (session_data == nullptr) 
+    if (session_data == nullptr)
     {
         assert(false);
         return;
@@ -724,7 +719,7 @@ void HttpInspect::clear(Packet* p)
     else
         current_section = HttpContextData::clear_snapshot(p->context);
 
-    if ( current_section == nullptr )
+    if (current_section == nullptr)
     {
         //assert(false); //FIXIT-M This happens with stream_user
         return;
